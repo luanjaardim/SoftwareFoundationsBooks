@@ -699,16 +699,16 @@ Proof. reflexivity. Qed.
     and returns a list of just those that are even and greater than
     7. *)
 
-Definition filter_even_gt7 (l : list nat) : list na
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admittedd.
+Definition filter_even_gt7 (l : list nat) : list nat :=
+  (filter (fun x => negb (leb x 7) && (even x)) l).
 
 Example test_filter_even_gt7_1 :
   filter_even_gt7 [1;2;6;9;10;3;12;8] = [10;12;8].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example test_filter_even_gt7_2 :
   filter_even_gt7 [5;2;6;19;129] = [].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (partition)
@@ -728,13 +728,13 @@ Example test_filter_even_gt7_2 :
 Definition partition {X : Type}
                      (test : X -> bool)
                      (l : list X)
-                   : list X * list X
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+                   : list X * list X :=
+  (filter test l, filter (fun e => negb (test e)) l).
 
 Example test_partition1: partition odd [1;2;3;4;5] = ([1;3;5], [2;4]).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 Example test_partition2: partition (fun x => false) [5;9;0] = ([], [5;9;0]).
-(* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -781,10 +781,21 @@ Proof. reflexivity. Qed.
     Show that [map] and [rev] commute.  You may need to define an
     auxiliary lemma. *)
 
+Lemma map_app: forall (X Y : Type) (f: X -> Y) (l l2: list X), 
+                map f (l ++ l2) = (map f l) ++ (map f l2).
+Proof.
+  intros. induction l.
+  - reflexivity.
+  - simpl. rewrite IHl. reflexivity.
+Qed.
+
 Theorem map_rev : forall (X Y : Type) (f : X -> Y) (l : list X),
   map f (rev l) = rev (map f l).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction l.
+  - reflexivity.
+  - simpl. rewrite map_app. rewrite IHl. simpl. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, especially useful (flat_map)
@@ -800,13 +811,16 @@ Proof.
 *)
 
 Fixpoint flat_map {X Y: Type} (f: X -> list Y) (l: list X)
-                   : list Y
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+                   : list Y :=
+  match l with
+  | h :: t => (f h) ++ (flat_map f t)
+  | nil => nil
+  end.
 
 Example test_flat_map1:
   flat_map (fun n => [n;n;n]) [1;5;4]
   = [1; 1; 1; 5; 5; 5; 4; 4; 4].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 (** [] *)
 
 (** Lists are not the only inductive type for which [map] makes sense.
@@ -956,10 +970,14 @@ Proof. reflexivity. Qed.
     situation where [simpl] does nothing but [reflexivity] solves the
     goal.) *)
 
+(* Ask about why this does not simplify with simpl.*)
 Theorem fold_length_correct : forall X (l : list X),
   fold_length l = length l.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros. induction l.
+  - reflexivity.
+  - simpl. rewrite <- IHl. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (fold_map)
