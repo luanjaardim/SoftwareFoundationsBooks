@@ -650,17 +650,7 @@ Theorem mult_plus_distr_r : forall n m p : nat,
 Proof.
   intros n m p.
   rewrite (mul_comm (n+m) p), (mul_comm n p), (mul_comm m p).
-  (*
-  assert (H1 : (n + m) * p = p * (n + m)). { rewrite mul_comm. reflexivity. }
-  assert (H2 : (n * p) = (p * n)). { rewrite mul_comm. reflexivity. }
-  assert (H3 : (m * p) = (p * m)). { rewrite mul_comm. reflexivity. }
-
-  rewrite H1, H2, H3.
-
-  when i do something like this before the induction apparently i need to
-  prove them again *)
-  
-  induction p as [|].
+  induction p.
   - reflexivity.
   - simpl. rewrite IHp. do 2 (rewrite add_assoc). rewrite (add_comm n m).
      assert (tmp : (m + n) + (p * n) = m + (n + (p * n))).

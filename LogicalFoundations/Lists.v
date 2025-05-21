@@ -436,7 +436,7 @@ Proof. reflexivity. Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (bag_more_functions)
-
+t
     Here are some more [bag] functions for you to practice with. *)
 
 (** When [remove_one] is applied to a bag without the number to
@@ -1243,9 +1243,7 @@ Theorem update_neq :
   forall (d : partial_map) (x y : id) (o: nat),
     eqb_id x y = false -> find x (update d y o) = find x d.
 Proof.
-  intros d x y o.
-  intro H.
-  simpl. rewrite H. reflexivity.
+  intros. simpl. rewrite H. reflexivity.
 Qed.
 (** [] *)
 End PartialMap.
