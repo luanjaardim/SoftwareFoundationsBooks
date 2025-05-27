@@ -112,7 +112,10 @@ Theorem rev_exercise1 : forall (l l' : list nat),
   l = rev l' ->
   l' = rev l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. rewrite H. 
+  assert (H1: rev (rev l') = l'). { apply rev_involutive. }
+  rewrite H1. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (apply_rewrite)
@@ -195,7 +198,9 @@ Example trans_eq_exercise : forall (n m o p : nat),
      (n + p) = m ->
      (n + p) = (minustwo o).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. transitivity m. apply H0. apply H.
+Qed.
+
 (** [] *)
 
 (* ################################################################# *)
@@ -274,7 +279,7 @@ Proof.
   (* WORKED IN CLASS *)
   injection H as H1 H2.
   rewrite H1. rewrite H2. reflexivity.
-Qed.
+Qed.  
 
 (** **** Exercise: 3 stars, standard (injection_ex3) *)
 Example injection_ex3 : forall (X : Type) (x y z : X) (l j : list X),
@@ -282,7 +287,18 @@ Example injection_ex3 : forall (X : Type) (x y z : X) (l j : list X),
   j = z :: l ->
   x = y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  injection H as H1 H2.
+  rewrite H1.
+  (* why transitivity doesn't work here? transitivity j. *)
+  assert (EqWithL : z :: l = y :: l). { rewrite H2, <- H0. reflexivity. }
+  injection EqWithL as Eq. apply Eq.
+  (* Version with rewrite in hypothesis:
+  rewrite H0 in H.
+  injection H as H1 H2.
+  transitivity z. apply H1. rewrite <- H2. reflexivity.
+  *)
+Qed.
 (** [] *)
 
 (** So much for injectivity of constructors.  What about disjointness? *)
@@ -332,7 +348,8 @@ Example discriminate_ex3 :
     x :: y :: l = [] ->
     x = z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+intros. discriminate H.
+Qed.
 (** [] *)
 
 (** For a more useful example, we can use [discriminate] to make a
@@ -360,7 +377,7 @@ Proof.
 (** If we use [discriminate] on this hypothesis, Coq confirms
     that the subgoal we are working on is impossible and removes it
     from further consideration. *)
-
+ 
     intros H. discriminate H.
 Qed.
 
@@ -646,7 +663,14 @@ Proof.
 Theorem eqb_true : forall n m,
   n =? m = true -> n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  induction n.
+  - simpl. destruct m.
+    + reflexivity.
+    + discriminate.
+  - simpl. destruct m.
+    + discriminate.
+    + intro eq. apply eq_S. apply IHn. apply eq.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced (eqb_true_informal)
@@ -669,7 +693,16 @@ Theorem plus_n_n_injective : forall n m,
   n + n = m + m ->
   n = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro n. induction n.
+  - simpl. destruct m.
+    -- reflexivity.
+    -- simpl. intro contra. discriminate contra.
+  - simpl. destruct m.
+    -- simpl. intro contra. discriminate contra.
+    -- intro eq. apply eq_S. apply IHn.
+      rewrite <- plus_n_Sm in eq. simpl in eq. rewrite <- plus_n_Sm in eq.
+      injection eq as H. apply H.
+Qed.
 (** [] *)
 
 (** The strategy of doing fewer [intros] before an [induction] to
