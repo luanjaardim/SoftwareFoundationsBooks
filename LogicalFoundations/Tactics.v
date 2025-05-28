@@ -809,7 +809,13 @@ Theorem nth_error_after_last: forall (n : nat) (X : Type) (l : list X),
   length l = n ->
   nth_error l n = None.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* Question: How to know if we need the variable generalized or not? *)
+  intros. generalize dependent n. induction l.
+  - reflexivity.
+  - intro n. destruct n.
+    -- simpl. discriminate.
+    -- simpl. intro H. apply IHl. injection H as goal. apply goal.
+Qed. 
 (** [] *)
 
 (* ################################################################# *)
