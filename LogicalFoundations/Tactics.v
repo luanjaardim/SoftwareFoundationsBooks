@@ -998,12 +998,25 @@ Fixpoint split {X Y : Type} (l : list (X*Y))
 
 (** Prove that [split] and [combine] are inverses in the following
     sense: *)
+(* This theorem was not necessary, we could use fn_equal instead *)
+Theorem eq_tail : forall (X : Type) (x : X) (tl1 tl2 : list X),
+  tl1 = tl2 -> x :: tl1 = x :: tl2.
+Proof.
+  intros. rewrite H. reflexivity.
+Qed.
 
 Theorem combine_split : forall X Y (l : list (X * Y)) l1 l2,
   split l = (l1, l2) ->
   combine l1 l2 = l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X Y l.  induction l.
+  - intros. simpl in H. injection H as H1 H2. rewrite <- H1, <- H2. reflexivity.
+  - intros lx ly H. simpl in H. destruct x.
+  destruct (split l).
+  injection H as H1 H2. rewrite <- H1, <- H2. simpl. 
+  (* apply fn_equal is also possible, not needing to prove eq_tail *)
+  apply eq_tail. apply IHl. reflexivity.
+Qed.
 (** [] *)
 
 (** The [eqn:] part of the [destruct] tactic is optional; although
@@ -1078,7 +1091,16 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool),
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. destruct b eqn:Bool, (f true) eqn:FnTrue, (f false) eqn:FnFalse.
+  - do 2 rewrite FnTrue. reflexivity.
+  - do 2 rewrite FnTrue. reflexivity.
+  - apply FnTrue.
+  - apply FnFalse.
+  - do 2 rewrite FnTrue. reflexivity.
+  - do 2 rewrite FnFalse. reflexivity.
+  - rewrite FnTrue. rewrite FnFalse. reflexivity.
+  - do 2 rewrite FnFalse. reflexivity.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -1159,7 +1181,14 @@ Proof.
 Theorem eqb_sym : forall (n m : nat),
   (n =? m) = (m =? n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro n. induction n.
+  - simpl. destruct m. 
+    -- reflexivity.
+    -- reflexivity.
+  - simpl. destruct m.
+    -- reflexivity.
+    -- simpl. apply IHn.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, optional (eqb_sym_informal)
