@@ -144,7 +144,15 @@ Qed.
 Example plus_is_O :
   forall n m : nat, n + m = 0 -> n = 0 /\ m = 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* Is this the best solution? *)
+  intros n m H. destruct n.
+  - simpl in H. split.
+    -- reflexivity.
+    -- apply H.
+  - split.
+    -- discriminate.
+    -- destruct m. reflexivity. discriminate.
+Qed.
 (** [] *)
 
 (** So much for proving conjunctive statements.  To go in the other
@@ -248,7 +256,8 @@ Theorem and_assoc : forall P Q R : Prop,
   P /\ (Q /\ R) -> (P /\ Q) /\ R.
 Proof.
   intros P Q R [HP [HQ HR]].
-  (* FILL IN HERE *) Admitted.
+  split. split. apply HP. apply HQ. apply HR.
+Qed.
 (** [] *)
 
 (** Finally, the infix notation [/\] is actually just syntactic sugar for
@@ -430,6 +439,7 @@ Theorem contradiction_implies_anything : forall P Q : Prop,
 Proof.
   (* WORKED IN CLASS *)
   intros P Q [HP HNP]. unfold not in HNP.
+  (* i did not get this apply HNP in HP *)
   apply HNP in HP. destruct HP.  Qed.
 
 Theorem double_neg : forall P : Prop,
@@ -454,14 +464,16 @@ Definition manual_grade_for_double_neg_informal : option (nat*string) := None.
 Theorem contrapositive : forall (P Q : Prop),
   (P -> Q) -> (~Q -> ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+ intros P Q H notQ. unfold not in *. intros HP. apply notQ. apply H. apply HP.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (not_both_true_and_false) *)
 Theorem not_both_true_and_false : forall P : Prop,
   ~ (P /\ ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P [ HP HNP ]. apply HNP in HP. apply HP.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, advanced (not_PNP_informal)
@@ -625,7 +637,7 @@ Lemma not_true_iff_false : forall b,
   b <> true <-> b = false.
 Proof.
   (* WORKED IN CLASS *)
-  intros b. split.
+  intros b. unfold iff. split.
   - (* -> *) apply not_true_is_false.
   - (* <- *)
     intros H. rewrite H. intros H'. discriminate H'.
