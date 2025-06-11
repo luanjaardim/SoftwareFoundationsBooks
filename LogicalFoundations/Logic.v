@@ -144,7 +144,12 @@ Qed.
 Example plus_is_O :
   forall n m : nat, n + m = 0 -> n = 0 /\ m = 0.
 Proof.
-  (* Is this the best solution? *)
+  intros. split.
+  - destruct n. reflexivity. discriminate H.
+  -  destruct m. reflexivity. rewrite add_comm in H. discriminate H.
+  (* 
+  --Previous solution 
+
   intros n m H. destruct n.
   - simpl in H. split.
     -- reflexivity.
@@ -152,6 +157,7 @@ Proof.
   - split.
     -- discriminate.
     -- destruct m. reflexivity. discriminate.
+  *)
 Qed.
 (** [] *)
 
