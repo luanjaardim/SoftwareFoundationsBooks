@@ -935,7 +935,6 @@ Proof.
       * left. f_equal. apply H3.
       * right. apply IHl'. exists z. split. reflexivity. apply H4.
 Qed.
-    (* FILL IN HERE *) Admitted.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (In_app_iff) *)
@@ -943,7 +942,21 @@ Theorem In_app_iff : forall A l l' (a:A),
   In a (l++l') <-> In a l \/ In a l'.
 Proof.
   intros A l. induction l as [|a' l' IH].
-  (* FILL IN HERE *) Admitted.
+    - split.
+      -- simpl. intro H. right. apply H.
+      -- simpl. intros [[] | H2]. apply H2.
+    - split.
+      -- simpl. intros [H1 | H2].
+        --- left. left. apply H1.
+        --- apply IH in H2. destruct H2.
+          * left. right. apply H.
+          * right. apply H.
+      -- simpl. intros [H1 | H2].
+        --- destruct H1.
+          * left. apply H.
+          * right. apply IH. left. apply H.
+        --- right. apply IH. right. apply H2.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, especially useful (All)
