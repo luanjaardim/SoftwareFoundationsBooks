@@ -971,15 +971,29 @@ Qed.
     lemma below.  (Of course, your definition should _not_ just
     restate the left-hand side of [All_In].) *)
 
-Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint All {T : Type} (P : T -> Prop) (l : list T) : Prop :=
+  match l with
+    | [] => True
+    | h :: t => P h /\ All P t
+  end.
 
 Theorem All_In :
   forall T (P : T -> Prop) (l : list T),
     (forall x, In x l -> P x) <->
     All P l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros T P l. induction l as [| h l' IH].
+    - split.
+      -- intros H. simpl. apply I.
+      -- intros. destruct H0.
+    - split.
+      --  intros H. simpl. split. apply H. simpl. 
+        --- left. reflexivity.
+        --- apply IH. intros. apply H. simpl. right. apply H0.
+      -- simpl. intros [H1 H2] x [H3 | H4]. 
+        --- rewrite H3 in H1. apply H1.
+        --- apply IH. apply H2. apply H4.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (combine_odd_even)
@@ -1290,7 +1304,12 @@ Lemma even_double_conv : forall n, exists k,
   n = if even n then double k else S (double k).
 Proof.
   (* Hint: Use the [even_S] lemma from [Induction.v]. *)
-  (* FILL IN HERE *) Admitted.
+  intro n. induction n.
+  - exists 0. reflexivity.
+  - rewrite even_S.  destruct IHn as [k IHn']. destruct (even n) eqn:H.
+    -- simpl. exists k. rewrite IHn'. reflexivity.
+    -- simpl. rewrite IHn'. exists (S k). simpl. reflexivity.
+Qed.
 (** [] *)
 
 (** Now the main theorem: *)
@@ -1463,12 +1482,23 @@ Qed.
 Theorem andb_true_iff : forall b1 b2:bool,
   b1 && b2 = true <-> b1 = true /\ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b1 b2. split.
+  - intro H. destruct b1, b2. split. do 2 reflexivity. reflexivity.
+  discriminate H. discriminate H. discriminate H.
+  - intros [B1 B2]. rewrite B1, B2. reflexivity.
+Qed.
 
 Theorem orb_true_iff : forall b1 b2,
   b1 || b2 = true <-> b1 = true \/ b2 = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros b1 b2. split.
+  - intro H. destruct b1.
+    -- left. reflexivity.
+    -- destruct b2.
+      --- right. reflexivity.
+      --- discriminate H.
+  - intros [B1 | B2]. rewrite B1. reflexivity. rewrite B2. destruct b1. reflexivity. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (eqb_neq)
@@ -1480,7 +1510,12 @@ Proof.
 Theorem eqb_neq : forall x y : nat,
   x =? y = false <-> x <> y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros x y. split.
+  - intro H. unfold not. rewrite <- eqb_eq. intro H2. rewrite H in H2. discriminate H2.
+  - intro H. rewrite <- eqb_eq in H. destruct (x =? y).
+    -- exfalso. apply H. reflexivity.
+    -- reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (eqb_list)
