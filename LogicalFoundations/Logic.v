@@ -685,7 +685,16 @@ Proof.
 Theorem or_distributes_over_and : forall P Q R : Prop,
   P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q R. split.
+  - intros [ HP | [ HQ HR ] ].
+    + split. left. apply HP. left. apply HP.
+    + split. right. apply HQ. right. apply HR.
+  - intros [ [ HP | HQ ] [ HP' | HR ] ].
+    + left. apply HP.
+    + left. apply HP.
+    + left. apply HP'.
+    + right. split. apply HQ. apply HR.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -795,7 +804,8 @@ Proof.
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros X P H. unfold not. intros [y H']. apply H'. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (dist_exists_or)
@@ -806,7 +816,14 @@ Proof.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intros X P Q. split.
+  - intros [x [HPx | HQx]].
+    + left. exists x. apply HPx.
+    + right. exists x. apply HQx.
+  - intros [[x HPx] | [y HQy]].
+    + exists x. left. apply HPx.
+    + exists y. right. apply HQy.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (leb_plus_exists) *)
@@ -904,6 +921,20 @@ Theorem In_map_iff :
 Proof.
   intros A B f l y. split.
   - induction l as [|x l' IHl'].
+    + simpl. intros [].
+    + intros [H1 | H2].
+      * exists x. split. apply H1. left. reflexivity.
+      * apply IHl' in H2. destruct H2 as [z [H1 H2]]. exists z. split.
+        -- apply H1.
+        -- simpl. right. apply H2.
+  - induction l as [| x' l' IHl']. simpl.
+    + intros [ _ [_ []]].
+    + intros [z [H1 H2]]. simpl in *. rewrite <- H1 in IHl'. rewrite <- H1.
+      (* Using this destruct before selecting left or right is very important *)
+      destruct H2 as [H3 | H4].
+      * left. f_equal. apply H3.
+      * right. apply IHl'. exists z. split. reflexivity. apply H4.
+Qed.
     (* FILL IN HERE *) Admitted.
 (** [] *)
 
