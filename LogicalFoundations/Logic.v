@@ -1510,12 +1510,18 @@ Qed.
 Theorem eqb_neq : forall x y : nat,
   x =? y = false <-> x <> y.
 Proof.
+  intros x y. rewrite <- not_true_iff_false. unfold not. split.
+  - intros. apply H. apply eqb_eq. apply H0.
+  - intros. apply H. apply eqb_eq in H0. apply H0.
+Qed.
+(*
+  -- Previous solution that does not use the hint
   intros x y. split.
   - intro H. unfold not. rewrite <- eqb_eq. intro H2. rewrite H in H2. discriminate H2.
   - intro H. rewrite <- eqb_eq in H. destruct (x =? y).
     -- exfalso. apply H. reflexivity.
     -- reflexivity.
-Qed.
+*)
 (** [] *)
 
 (** **** Exercise: 3 stars, standard (eqb_list)
@@ -1527,15 +1533,32 @@ Qed.
     definition is correct, prove the lemma [eqb_list_true_iff]. *)
 
 Fixpoint eqb_list {A : Type} (eqb : A -> A -> bool)
-                  (l1 l2 : list A) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+                  (l1 l2 : list A) : bool :=
+  match l1, l2 with
+  | [], [] => true
+  | h :: t1, g :: t2 => if eqb h g then eqb_list eqb t1 t2 else false
+  | _, _ => false
+  end.
 
 Theorem eqb_list_true_iff :
   forall A (eqb : A -> A -> bool),
     (forall a1 a2, eqb a1 a2 = true <-> a1 = a2) ->
     forall l1 l2, eqb_list eqb l1 l2 = true <-> l1 = l2.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros A eqb H l1. induction l1.
+  - simpl. destruct l2.
+    -- split. reflexivity. reflexivity.
+    -- split. discriminate. discriminate.
+  - simpl. destruct l2 as [| y].
+    -- split. discriminate. discriminate.
+    -- split.
+      + destruct (eqb x y) eqn:Comp.
+        * apply H in Comp. subst. intro H1. f_equal. apply IHl1. apply H1.
+        * intro contra. discriminate contra.
+      + destruct (eqb x y) eqn:Comp.
+        * intro Eq. injection Eq as H1 H2. rewrite IHl1. rewrite H2. reflexivity.
+        * intro Eq. injection Eq as H1 H2. apply H in H1. rewrite H1 in Comp. discriminate Comp.
+Qed.
 
 (** [] *)
 
@@ -1547,13 +1570,23 @@ Proof.
 
 (** Copy the definition of [forallb] from your [Tactics] here
     so that this file can be graded on its own. *)
-Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
+  match l with
+  | [] => true
+  | h :: t => test h && forallb test t
+  end.
 
 Theorem forallb_true_iff : forall X test (l : list X),
   forallb test l = true <-> All (fun x => test x = true) l.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction l.
+  - simpl. split. intro. apply I. intro. reflexivity.
+  - simpl. split.
+    -- intro H. split.
+      --- destruct (test x). reflexivity. simpl in H. discriminate H.
+      --- apply IHl. destruct (test x). simpl in H. apply H. discriminate H.
+    -- intros [H1 H2]. rewrite H1. simpl. apply IHl. apply H2. 
+Qed.
 
 (** (Ungraded thought question) Are there any important properties of
     the function [forallb] which are not captured by this
@@ -1701,9 +1734,23 @@ Definition tr_rev {X} (l : list X) : list X :=
 
     Prove that the two definitions are indeed equivalent. *)
 
+Lemma rev_initial_list_property : forall (X : Type) (l1 l2 : list X),
+(* This proof shows that the l2 list, the initial list of rev_append, can
+   be appended at the end of the rev operation without any problem.
+ *)
+  rev_append l1 l2 = (rev l1) ++ l2.
+Proof.
+  intros X l1. induction l1.
+    - reflexivity.
+    - simpl. intro. rewrite <- (app_assoc _ (rev l1) ([x]) l2). simpl. apply IHl1. 
+Qed.
+
 Theorem tr_rev_correct : forall X, @tr_rev X = @rev X.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intro X. apply functional_extensionality. intro l. unfold tr_rev. destruct l.
+  - reflexivity.
+  - simpl. unfold tr_rev. simpl. apply rev_initial_list_property.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1834,7 +1881,9 @@ Qed.
 Theorem excluded_middle_irrefutable: forall (P : Prop),
   ~ ~ (P \/ ~ P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* Crazy proof, using itself to prove itself? *)
+  unfold not. intros P H. apply H. right. intro P'. apply H. left. apply P'.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (not_exists_dist)
