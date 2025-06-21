@@ -566,7 +566,10 @@ Qed.
 Theorem ev_double : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  - apply ev_0.
+  - apply ev_SS. apply IHn.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -740,7 +743,8 @@ Proof. intros H. inversion H. Qed.
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n E. inversion E. inversion H0. apply H2.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard (ev5_nonsense)
@@ -750,7 +754,8 @@ Proof.
 Theorem ev5_nonsense :
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros E. inversion E. inversion H0. inversion H2.
+Qed.
 (** [] *)
 
 (** The [inversion] tactic does quite a bit of work. For
@@ -911,7 +916,16 @@ Qed.
 (** **** Exercise: 2 stars, standard (ev_sum) *)
 Theorem ev_sum : forall n m, ev n -> ev m -> ev (n + m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction H. apply H0. apply ev_SS. apply IHev.
+
+  (* -- Question before simplification:
+    intros n m H. generalize dependent m. induction H.
+  - intros m E. simpl. apply E.
+  - intros m E. simpl. apply ev_SS. apply IHev. apply E.
+  *)
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, especially useful (ev_ev__ev) *)
