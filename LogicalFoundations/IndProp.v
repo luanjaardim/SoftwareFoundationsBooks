@@ -1563,14 +1563,18 @@ Qed.
 Lemma EmptySet_is_empty : forall T (s : list T),
   ~ (s =~ EmptySet).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* Would like to understando better the inversion on H here *)
+  intros T s H. inversion H.
+Qed.
 
 Lemma MUnion' : forall T (s : list T) (re1 re2 : reg_exp T),
   s =~ re1 \/ s =~ re2 ->
   s =~ Union re1 re2.
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros T s re1 re2 [H1 | H2].
+  - apply (MUnionL _ _ _ H1).
+  - apply (MUnionR _ _ _ H2).
+Qed.
 (** The next lemma is stated in terms of the [fold] function from the
     [Poly] chapter: If [ss : list (list T)] represents a sequence of
     strings [s1, ..., sn], then [fold app ss []] is the result of
@@ -1580,7 +1584,12 @@ Lemma MStar' : forall T (ss : list (list T)) (re : reg_exp T),
   (forall s, In s ss -> s =~ re) ->
   fold app ss [] =~ Star re.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction ss.
+  - apply MStar0.
+  - simpl in *. apply MStarApp.
+    -- apply H. left. reflexivity.
+    -- apply IHss. intros l H1. apply H. right. apply H1.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (EmptyStr_not_needed)
@@ -1683,14 +1692,40 @@ Qed.
     regular expression matches some string. Prove that your function
     is correct. *)
 
-Fixpoint re_not_empty {T : Type} (re : reg_exp T) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint re_not_empty {T : Type} (re : reg_exp T) : bool :=
+  match re with
+  | EmptySet => false
+  | EmptyStr => true
+  | Char _ => true
+  | App re1 re2 => re_not_empty re1 && re_not_empty re2
+  | Union re1 re2 => re_not_empty re1 || re_not_empty re2
+  | Star _ => true (* always will match EmptyStr *)
+  end.
 
 Lemma re_not_empty_correct : forall T (re : reg_exp T),
   (exists s, s =~ re) <-> re_not_empty re = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros T re. split.
+  - intros [l E]. induction E.
+    -- reflexivity.
+    -- reflexivity.
+    -- simpl. rewrite IHE1. rewrite IHE2. reflexivity.
+    -- simpl. rewrite IHE. reflexivity.
+    -- simpl. rewrite IHE. destruct (re_not_empty re1). reflexivity. reflexivity.
+    -- reflexivity.
+    -- apply IHE2.
+  - intros H. induction re.
+    -- simpl in H. discriminate.
+    -- exists []. apply MEmpty.
+    -- exists [t]. apply MChar.
+    -- simpl in H. apply andb_true_iff in H. destruct H as [H1 H2].
+      --- destruct IHre1. apply H1. destruct IHre2. apply H2.
+          exists (x ++ x0). apply MApp. apply H. apply H0.
+    -- simpl in H. destruct (re_not_empty re1).
+      --- destruct IHre1. reflexivity. exists x. apply MUnionL. apply H0.
+      --- simpl in H. rewrite H in IHre2. destruct IHre2. reflexivity. exists x. apply MUnionR. apply H0.
+    -- exists []. apply MStar0.
+Qed.
 
 (* ================================================================= *)
 (** ** The [remember] Tactic *)
@@ -2067,8 +2102,13 @@ Qed.
 (** **** Exercise: 2 stars, standard, especially useful (reflect_iff) *)
 Theorem reflect_iff : forall P b, reflect P b -> (P <-> b = true).
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros P b HP. split.
+  - destruct b.
+    -- reflexivity.
+    -- intro HPn. apply ReflectT in HPn.
+       inversion HP. inversion HPn. apply H in H0. destruct H0.
+  - intro H. rewrite H in HP. inversion HP. apply H0.
+Qed.
 
 (** We can think of [reflect] as a variant of the usual "if and only
     if" connective; the advantage of [reflect] is that, by destructing
@@ -2105,7 +2145,8 @@ Proof.
   - (* l = [] *)
     simpl. intros H. apply H. reflexivity.
   - (* l = m :: l' *)
-    simpl. destruct (eqbP n m) as [EQnm | NEQnm].
+  (* Did not understand this destruct *)
+    simpl. Print eqbP. destruct (eqbP n m) as [EQnm | NEQnm].
     + (* n = m *)
       intros _. rewrite EQnm. left. reflexivity.
     + (* n <> m *)
@@ -2126,8 +2167,17 @@ Theorem eqbP_practice : forall n l,
   count n l = 0 -> ~(In n l).
 Proof.
   intros n l Hcount. induction l as [| m l' IHl'].
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  - intro contra. destruct contra.
+  - intros [H1 | H2].
+    -- rewrite H1 in Hcount. simpl in Hcount. 
+    rewrite eqb_refl in Hcount. discriminate Hcount.
+    -- unfold not in IHl'. apply IHl'.
+      --- simpl in Hcount. destruct (n =? m) in Hcount.
+        + discriminate Hcount.
+        + apply Hcount.
+      --- apply H2.
+Qed.
+
 
 (** This small example shows reflection giving us a small gain in
     convenience; in larger developments, using [reflect] consistently
