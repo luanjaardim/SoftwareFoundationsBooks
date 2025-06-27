@@ -894,18 +894,28 @@ where "e '==>b' b" := (bevalR e b) : type_scope
 Lemma bevalR_iff_beval : forall b bv,
   b ==>b bv <-> beval b = bv.
 Proof.
-  intro b. induction b.
-  - split.
-    + intros. destruct bv. * reflexivity. * inversion H.
-    + intros. destruct bv. * apply E_BTrue. * discriminate H.
-  - split.
-    + intros. destruct bv. * inversion H. * reflexivity.
-    + intros. destruct bv. * discriminate H. * apply E_BFalse.
-  - split.
-    + intros. destruct bv; inversion H; apply aevalR_iff_aeval in H3, H4; subst; reflexivity.
-    + intros. destruct bv; simpl in H; rewrite <- H; apply E_BEq; apply aevalR_iff_aeval; reflexivity.
-  Abort.
-
+  intro b. induction b;
+  split; intros; destruct bv;
+    try reflexivity;
+    try inversion H;
+    try apply E_BTrue;
+    try apply E_BFalse;
+    try (inversion H; apply aevalR_iff_aeval in H3, H4; subst; reflexivity);
+    try (simpl in H;
+      try rewrite <- H;
+      try apply E_BEq;
+      try apply E_BNeq;
+      try apply E_BLe;
+      try apply E_BGt;
+      apply aevalR_iff_aeval; reflexivity);
+    (*BNot automation*)
+      try (rewrite H1; apply IHb in H2; simpl; rewrite H2; apply H1);
+      try (apply E_BNot; apply IHb; reflexivity);
+    (*BAnd automation*)
+      try (simpl; apply IHb1 in H3; apply IHb2 in H4; subst; reflexivity);
+      try (apply E_BAnd; try apply IHb1; try apply IHb2; reflexivity)
+    .
+Qed.
 End AExp.
 
 (* ================================================================= *)
@@ -1607,8 +1617,12 @@ Example ceval_example2:
     Z := 2
   ]=> (Z !-> 2 ; Y !-> 1 ; X !-> 0).
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  apply E_Seq with (st' := X !-> 0).
+  - apply E_Asgn. reflexivity.
+  - apply E_Seq with (st' := Y !-> 1; X !-> 0).
+    + apply E_Asgn. reflexivity.
+    + apply E_Asgn. reflexivity.
+Qed.
 
 Set Printing Implicit.
 Check @ceval_example2.
@@ -1718,14 +1732,16 @@ Proof.
   intros st st' contra. unfold loop in contra.
   remember <{ while true do skip end }> as loopdef
            eqn:Heqloopdef.
-
+  
   (** Proceed by induction on the assumed derivation showing that
       [loopdef] terminates.  Most of the cases are immediately
       contradictory and so can be solved in one step with
       [discriminate]. *)
 
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  induction contra; try discriminate; inversion Heqloopdef; subst.
+  - discriminate H.
+  - apply IHcontra2. reflexivity.
+Qed.
 
 (** **** Exercise: 3 stars, standard (no_whiles_eqv)
 
@@ -1750,15 +1766,33 @@ Fixpoint no_whiles (c : com) : bool :=
     [no_whilesR c] is provable exactly when [c] is a program with no
     while loops.  Then prove its equivalence with [no_whiles]. *)
 
+(* Can i use the no_whiles defined function here? *)
 Inductive no_whilesR: com -> Prop :=
- (* FILL IN HERE *)
-.
+  | R_Skip : no_whilesR CSkip
+  | R_Asgn : forall x a, no_whilesR (CAsgn x a)
+  | R_Seq  : forall c1 c2,
+    no_whiles c1 = true -> no_whiles c2 = true -> no_whilesR (CSeq c1 c2)
+  | R_If   : forall b c1 c2,
+    no_whiles c1 = true -> no_whiles c2 = true -> no_whilesR (CIf b c1 c2).
 
 Theorem no_whiles_eqv:
   forall c, no_whiles c = true <-> no_whilesR c.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intro c. split.
+  - induction c; intro H.
+    + apply R_Skip.
+    + apply R_Asgn.
+    + simpl in H. apply andb_prop in H. destruct H. apply R_Seq.
+      * apply H.
+      * apply H0.
+    + apply R_If; simpl in H; apply andb_prop in H; destruct H.
+      * apply H.
+      * apply H0.
+    + discriminate H.
+  - intro H. induction H;
+    try reflexivity;
+    try (simpl; rewrite H, H0; reflexivity).
+Qed.
 
 (** **** Exercise: 4 stars, standard (no_whiles_terminating)
 
