@@ -463,23 +463,36 @@ Admitted.
     it is sound.  Use the tacticals we've just seen to make the proof
     as short and elegant as possible. *)
 
-Fixpoint optimize_0plus_b (b : bexp) : bexp
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint optimize_0plus_b (b : bexp) : bexp :=
+  match b with
+  | BTrue => BTrue
+  | BFalse => BFalse
+  | BEq a b => BEq (0plus_optimize a) (optimize_0plus b)
+  | BNeq a b => BNeq (optimize_0plus a) (optimize_0plus b)
+  | BLe a b => BLe (optimize_0plus a) (optimize_0plus b)
+  | BGt a b => BGt (optimize_0plus a) (optimize_0plus b)
+  | BNot x => BNot (optimize_0plus_b x)
+  | BAnd a b => BAnd (optimize_0plus_b a) (optimize_0plus_b b)
+  end.
 
 Example optimize_0plus_b_test1:
   optimize_0plus_b (BNot (BGt (APlus (ANum 0) (ANum 4)) (ANum 8))) =
                    (BNot (BGt (ANum 4) (ANum 8))).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Example optimize_0plus_b_test2:
   optimize_0plus_b (BAnd (BLe (APlus (ANum 0) (ANum 4)) (ANum 5)) BTrue) =
                    (BAnd (BLe (ANum 4) (ANum 5)) BTrue).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
 Theorem optimize_0plus_b_sound : forall b,
   beval (optimize_0plus_b b) = beval b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction b;
+  try (simpl; reflexivity);
+  try (simpl; repeat rewrite optimize_0plus_sound; reflexivity);
+  simpl; try rewrite IHb; try rewrite IHb1; try rewrite IHb2; reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, standard, optional (optimize)
@@ -857,16 +870,41 @@ Qed.
     [aevalR], and prove that it is equivalent to [beval]. *)
 
 Reserved Notation "e '==>b' b" (at level 90, left associativity).
+
+Print aevalR. Print bexp. Print negb.
 Inductive bevalR: bexp -> bool -> Prop :=
-(* FILL IN HERE *)
+  | E_BTrue : bevalR BTrue true
+  | E_BFalse : bevalR BFalse false
+  | E_BEq (a1 a2 : aexp) (n1 n2 : nat)
+  (H1 : aevalR a1 n1) (H2 : aevalR a2 n2) : bevalR (BEq a1 a2) (n1 =? n2)
+  | E_BNeq (a1 a2 : aexp) (n1 n2 : nat)
+  (H1 : aevalR a1 n1) (H2 : aevalR a2 n2) : bevalR (BNeq a1 a2) (negb (n1 =? n2))
+  | E_BLe (a1 a2 : aexp) (n1 n2 : nat)
+  (H1 : aevalR a1 n1) (H2 : aevalR a2 n2) : bevalR (BLe a1 a2) (n1 <=? n2)
+  | E_BGt (a1 a2 : aexp) (n1 n2 : nat)
+  (H1 : aevalR a1 n1) (H2 : aevalR a2 n2) : bevalR (BGt a1 a2) (negb (n1 <=? n2))
+  | E_BNot (b : bexp) (x : bool)
+  (H : bevalR b x) : bevalR (BNot b) (negb x)
+  | E_BAnd (b1 b2 : bexp) (x1 x2 : bool)
+  (H1 : bevalR b1 x1) (H2 : bevalR b2 x2) : bevalR (BAnd b1 b2) (x1 && x2)
+
 where "e '==>b' b" := (bevalR e b) : type_scope
 .
 
 Lemma bevalR_iff_beval : forall b bv,
   b ==>b bv <-> beval b = bv.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intro b. induction b.
+  - split.
+    + intros. destruct bv. * reflexivity. * inversion H.
+    + intros. destruct bv. * apply E_BTrue. * discriminate H.
+  - split.
+    + intros. destruct bv. * inversion H. * reflexivity.
+    + intros. destruct bv. * discriminate H. * apply E_BFalse.
+  - split.
+    + intros. destruct bv; inversion H; apply aevalR_iff_aeval in H3, H4; subst; reflexivity.
+    + intros. destruct bv; simpl in H; rewrite <- H; apply E_BEq; apply aevalR_iff_aeval; reflexivity.
+  Abort.
 
 End AExp.
 
