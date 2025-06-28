@@ -1801,7 +1801,33 @@ Qed.
 
     Use either [no_whiles] or [no_whilesR], as you prefer. *)
 
-(* FILL IN HERE *)
+Theorem no_whiles_terminating: forall c st,
+   no_whiles c = true -> (exists st', st =[ c ]=> st').
+Proof.
+  intro c. induction c.
+  - intros. exists st. apply E_Skip.
+  - intros. exists (x !-> (aeval st a); st). apply E_Asgn. reflexivity.
+  - intros. simpl in H. apply andb_true_iff in H. 
+    destruct H as [H1 H2].
+    apply IHc1 with (st := st) in H1.
+    destruct H1 as [st' H1].
+    apply IHc2 with (st := st') in H2.
+    destruct H2 as [st'' H2].
+    exists st''. apply E_Seq with (st' := st').
+    + apply H1.
+    + apply H2.
+  - intros. simpl in H. apply andb_true_iff in H. 
+    destruct H as [H1 H2].
+    apply IHc1 with (st := st) in H1.
+    destruct H1 as [st1 H1].
+    apply IHc2 with (st := st) in H2.
+    destruct H2 as [st2 H2].
+    (* If the condition is true we execute the c1, otherwise c2 *)
+    destruct (beval st b) eqn:Cond.
+    + exists st1. apply E_IfTrue. * apply Cond. * apply H1.
+    + exists st2. apply E_IfFalse. * apply Cond. * apply H2.
+  - intros. discriminate H.
+Qed.
 
 (* Do not modify the following line: *)
 Definition manual_grade_for_no_whiles_terminating : option (nat*string) := None.
