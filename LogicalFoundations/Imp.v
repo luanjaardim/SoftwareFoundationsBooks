@@ -1771,27 +1771,19 @@ Inductive no_whilesR: com -> Prop :=
   | R_Skip : no_whilesR CSkip
   | R_Asgn : forall x a, no_whilesR (CAsgn x a)
   | R_Seq  : forall c1 c2,
-    no_whiles c1 = true -> no_whiles c2 = true -> no_whilesR (CSeq c1 c2)
+    no_whilesR c1 -> no_whilesR c2 -> no_whilesR (CSeq c1 c2)
   | R_If   : forall b c1 c2,
-    no_whiles c1 = true -> no_whiles c2 = true -> no_whilesR (CIf b c1 c2).
+    no_whilesR c1 -> no_whilesR c2 -> no_whilesR (CIf b c1 c2).
 
 Theorem no_whiles_eqv:
   forall c, no_whiles c = true <-> no_whilesR c.
 Proof.
-  intro c. split.
-  - induction c; intro H.
-    + apply R_Skip.
-    + apply R_Asgn.
-    + simpl in H. apply andb_prop in H. destruct H. apply R_Seq.
-      * apply H.
-      * apply H0.
-    + apply R_If; simpl in H; apply andb_prop in H; destruct H.
-      * apply H.
-      * apply H0.
-    + discriminate H.
-  - intro H. induction H;
-    try reflexivity;
-    try (simpl; rewrite H, H0; reflexivity).
+  intros. split; intro H.
+  - induction c; try constructor; try apply IHc1; try apply IHc2;
+    try (apply andb_true_iff in H; destruct H; try apply H; try apply H0).
+    discriminate.
+  - induction H; try constructor;
+    try (simpl; rewrite IHno_whilesR1; rewrite IHno_whilesR2; reflexivity).
 Qed.
 
 (** **** Exercise: 4 stars, standard (no_whiles_terminating)
