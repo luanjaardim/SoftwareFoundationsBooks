@@ -1261,7 +1261,10 @@ Proof.
   - eapply hoare_seq.
     + eapply hoare_asgn.
     + eapply hoare_asgn.
-  Admitted.
+  - eapply hoare_consequence_pre.
+    + apply hoare_asgn.
+    + unfold assert_implies. intros. simpl. assumption.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced (invalid_triple)
@@ -1496,7 +1499,14 @@ Theorem if_minus_plus :
     end
   {{Y = X + Z}}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply hoare_if.
+  - eapply hoare_consequence_pre.
+    + eapply hoare_asgn.
+    + assertion_auto''.
+  - eapply hoare_consequence_pre.
+    + eapply hoare_asgn.
+    + assertion_auto''.
+Qed.
 (** [] *)
 
 (* ----------------------------------------------------------------- *)
@@ -1581,7 +1591,13 @@ Inductive ceval : com -> state -> state -> Prop :=
       st  =[ c ]=> st' ->
       st' =[ while b do c end ]=> st'' ->
       st  =[ while b do c end ]=> st''
-(* FILL IN HERE *)
+  | E_If1True : forall st st' b c1,
+      beval st b = true ->
+      st =[ c1 ]=> st' ->
+      st =[ if1 b then c1 end ]=> st'
+  | E_If1False : forall st b c1,
+      beval st b = false ->
+      st =[ if1 b then c1 end ]=> st
 
 where "st '=[' c ']=>' st'" := (ceval c st st').
 
@@ -1592,12 +1608,11 @@ Hint Constructors ceval : core.
 
 Example if1true_test :
   empty_st =[ if1 X = 0 then X := 1 end ]=> (X !-> 1).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. eauto. Qed.
 
 Example if1false_test :
   (X !-> 2) =[ if1 X = 0 then X := 1 end ]=> (X !-> 2).
-Proof. (* FILL IN HERE *) Admitted.
-
+Proof. eauto. Qed.
 (** [] *)
 
 (** Now we have to repeat the definition and notation of Hoare triples,
@@ -1633,7 +1648,14 @@ Notation "{{ P }} c {{ Q }}" :=
     be in the assertion scope.  For example, if you want [e] to be
     parsed as an assertion, write it as [(e)%assertion]. *)
 
-(* FILL IN HERE *)
+Theorem hoare_if1 : forall P Q (b:bexp) c1,
+  {{ P /\ b }} c1 {{Q}} ->
+  {{ P /\ ~ b}} skip {{Q}} ->
+  {{P}} if1 b then c1 end {{Q}}.
+Proof.
+  intros P Q b c1 H1 H2.
+  unfold valid_hoare_triple. intros. inversion H; subst; eauto.
+Qed.
 
 (** For full credit, prove formally ([hoare_if1_good]) that your rule is
     precise enough to show the following Hoare triple is valid:
@@ -1644,6 +1666,33 @@ Notation "{{ P }} c {{ Q }}" :=
     end
   {{ X = Z }}
 *)
+Example hoare_if1_good : 
+  {{ X + Y = Z }}
+    if1 Y <> 0 then
+      X := X + Y
+    end
+  {{ X = Z }}.
+Proof.
+  apply hoare_if1.
+  - unfold valid_hoare_triple. intros. destruct H0.
+  inversion H; subst. simpl in *. rewrite t_update_neq with (x2 := Z).
+    + rewrite H0. reflexivity.
+    + discriminate.
+  - unfold valid_hoare_triple. intros. inversion H; subst.
+    destruct H0. unfold not, bassertion in H1. rewrite <- H0. simpl in *.
+    assert (Hhip: forall x y, negb (x =? y) = true <-> x <> y). {
+      intros. split; intros.
+        - unfold not. intros. rewrite H3 in H2. rewrite eqb_refl in H2. discriminate.
+        - unfold not in H2. Search (negb ?x = true). rewrite negb_true_iff.
+          destruct (x =? y) eqn:Comp.
+            + Search ((?x =? ?y) = true). rewrite eqb_eq in Comp. apply H2 in Comp. destruct Comp.
+            + reflexivity.
+    }
+    rewrite Hhip in H1. fold (~ (st' Y <> 0)) in H1.
+    Search (~ (_ <> _)). rewrite eq_dne in H1.
+    rewrite H1. lia.
+Qed.
+
 (* Do not modify the following line: *)
 Definition manual_grade_for_hoare_if1 : option (nat*string) := None.
 (** [] *)
