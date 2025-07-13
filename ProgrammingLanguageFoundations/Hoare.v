@@ -1305,7 +1305,15 @@ Theorem invalid_triple : ~ forall (a : aexp) (n : nat),
 Proof.
   unfold valid_hoare_triple.
   intros H.
-  (* FILL IN HERE *) Admitted.
+  specialize (H (AId X) 2). simpl in H.
+  assert (Hip: forall st, st =[ X := 3; Y := X ]=> (Y !-> 3; X !-> 3; st)). {
+    intros. apply E_Seq with (st' := (X !-> 3; st)); apply E_Asgn; reflexivity.
+  }
+  specialize (Hip (X !-> 2)).
+  apply H in Hip.
+  - discriminate.
+  - reflexivity.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -2161,14 +2169,17 @@ Proof. eauto. Qed.
 
 (** Complete the Hoare rule for [HAVOC] commands below by defining
     [havoc_pre], and prove that the resulting rule is correct. *)
-
-Definition havoc_pre (X : string) (Q : Assertion) (st : total_map nat) : Prop
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+(* Theorem hoare_asgn : forall Q X a,
+  {{Q [X |-> a]}} X := a {{Q}}. *)
+Definition havoc_pre (X : string) (Q : Assertion) (st : total_map nat) : Prop :=
+  forall n, Q (X !-> n; st).
 
 Theorem hoare_havoc : forall (Q : Assertion) (X : string),
   {{ $(havoc_pre X Q) }} havoc X {{ Q }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold valid_hoare_triple. intros.
+  inversion H; subst. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (havoc_post)
@@ -2186,8 +2197,8 @@ Theorem havoc_post : forall (P : Assertion) (X : string),
 Proof.
   intros P X. eapply hoare_consequence_pre.
   - apply hoare_havoc.
-  - (* FILL IN HERE *) Admitted.
-
+  - unfold "->>", havoc_pre, assertion_sub. intros. exists n.
+    simpl. rewrite t_update_shadow. Admitted.
 (** [] *)
 
 End Himp.
