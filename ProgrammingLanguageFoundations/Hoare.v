@@ -2197,9 +2197,10 @@ Theorem havoc_post : forall (P : Assertion) (X : string),
 Proof.
   intros P X. eapply hoare_consequence_pre.
   - apply hoare_havoc.
-  - unfold "->>", havoc_pre, assertion_sub. intros. exists n.
-    simpl. rewrite t_update_shadow. Admitted.
-(** [] *)
+  - unfold "->>", havoc_pre, assertion_sub. intros. exists (st X).
+  rewrite t_update_shadow. simpl. rewrite t_update_same. assumption.
+Qed.
+(** [] *) 
 
 End Himp.
 
