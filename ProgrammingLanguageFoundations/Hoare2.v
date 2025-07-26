@@ -1272,23 +1272,23 @@ Example slow_assignment_dec (m : nat) : decorated :=
   <{
     {{ X = m }}
       Y := 0
-                    {{ FILL_IN_HERE }} ->>
-                    {{ FILL_IN_HERE }} ;
+                    {{ Y = 0 /\ X = m }} ->>
+                    {{ Y + X = m }} ;
       while X <> 0 do
-                    {{ FILL_IN_HERE }} ->>
-                    {{ FILL_IN_HERE }}
+                    {{ Y + X = m /\ X <> 0 }} ->>
+                    {{ (Y + 1) + (X - 1) = m }}
          X := X - 1
-                    {{ FILL_IN_HERE }} ;
+                    {{ (Y + 1) + X = m }} ;
          Y := Y + 1
-                    {{ FILL_IN_HERE }}
+                    {{ Y + X = m }}
       end
-    {{ FILL_IN_HERE }} ->>
+    {{ Y + X = m /\ X = 0 }} ->>
     {{ Y = m }}
   }>.
 
 Theorem slow_assignment : forall m,
   outer_triple_valid (slow_assignment_dec m).
-Proof. (* FILL IN HERE *) Admitted.
+Proof. verify. Qed.
 (** [] *)
 
 (* ================================================================= *)
@@ -1354,14 +1354,14 @@ Fixpoint parity x :=
 Definition parity_dec (m:nat) : decorated :=
   <{
   {{ X = m }} ->>
-  {{ FILL_IN_HERE }}
+  {{ #parity X = #parity m }}
     while 2 <= X do
-                  {{ FILL_IN_HERE }} ->>
-                  {{ FILL_IN_HERE }}
+                  {{ #parity X = #parity m /\ 2 <= X }} ->>
+                  {{ #parity (X - 2) = #parity m }}
       X := X - 2
-                  {{ FILL_IN_HERE }}
+                  {{ #parity X = #parity m }}
     end
-  {{ FILL_IN_HERE }} ->>
+  {{ #parity X = #parity m /\ ~ (2 <= X) }} ->>
   {{ X = #parity m }} }>.
 
 (** If you use the suggested loop invariant, you may find the following
@@ -1392,7 +1392,20 @@ Qed.
 Theorem parity_outer_triple_valid : forall m,
   outer_triple_valid (parity_dec m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  verify.
+  - destruct (st X).
+    + discriminate.
+    + destruct n.
+      * inversion H0.
+      * lia.
+  - intro H1. destruct (st X).
+    + inversion H1.
+    + destruct n.
+      * inversion H1. inversion H3.
+      * discriminate.
+  - rewrite <- H. apply parity_ge_2. assumption.
+  - rewrite <- H. symmetry. apply parity_lt_2. assumption.
+Qed.
 
 (** [] *)
 
@@ -1830,7 +1843,10 @@ Lemma fib_eqn : forall n,
   n > 0 ->
   fib n + fib (pred n) = fib (1 + n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction n.
+  - inversion H.
+  - reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced, optional (fib)
