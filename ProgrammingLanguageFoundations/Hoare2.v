@@ -1625,15 +1625,44 @@ Compute fact 5. (* ==> 120 *)
     For example, recall that [1 + ...] is easier to work with than
     [... + 1]. *)
 
-Example factorial_dec (m:nat) : decorated
-(* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Example factorial_dec (m:nat) : decorated :=
+  <{
+    {{ X = m }}
+      Y := 1
+                    {{ Y = 1 /\ X = m }} ->>
+                    {{ Y * (#fact X) = #fact m }} ;
+      while X <> 0 do
+                    {{ Y * (#fact X) = #fact m /\ X <> 0 }} ->>
+                    {{ (Y * X) * (#fact (X - 1)) = #fact m }}
+         Y := X * Y
+                    {{ Y * (#fact (X - 1)) = #fact m }} ;
+         X := X - 1
+                    {{ Y * (#fact X) = #fact m }}
+      end
+    {{ Y * (#fact X) = #fact m /\ X = 0 }} ->>
+    {{ Y = #fact m }}
+  }>.
 
-(* FILL IN HERE *)
+Lemma fact_minus_one : forall n,
+  n <> 0 -> fact n = n * (fact (n-1)).
+Proof.
+  intros. induction n.
+  - destruct H. reflexivity.
+  - simpl. rewrite sub_0_r. reflexivity.
+Qed.
 
 Theorem factorial_correct: forall m,
   outer_triple_valid (factorial_dec m).
-Proof. (* FILL IN HERE *) Admitted.
-(** [] *)
+Proof.
+  verify.
+  - remember (st Y) as n.
+    remember (st X) as n2. rewrite <- H. rewrite <- mul_assoc.
+    rewrite <- fact_minus_one.
+    + reflexivity.
+    + assumption.
+  - simpl in H. rewrite mul_1_r in H. apply H.
+Qed.
+(**   [] *)
 
 (* ================================================================= *)
 (** ** Exercise: Minimum *)
@@ -1875,36 +1904,46 @@ Qed.
 
 Definition T : string := "T".
 
+(* loop invariant: Y = #fib (X-1) /\ Z = #fib X /\ X > 0 *)
 Definition dfib (n : nat) : decorated :=
   <{
     {{ True }} ->>
-    {{ FILL_IN_HERE }}
+    {{ 1 = #fib (1-1) /\ 1 = #fib 1 /\ 1 > 0}}
     X := 1
-                {{ FILL_IN_HERE }} ;
+                {{ 1 = #fib (X-1) /\ 1 = #fib X /\ X > 0}} ;
     Y := 1
-                {{ FILL_IN_HERE }} ;
+                {{ Y = #fib (X-1) /\ 1 = #fib X /\ X > 0}} ;
     Z := 1
-                {{ FILL_IN_HERE }} ;
+                {{ Y = #fib (X-1) /\ Z = #fib X /\ X > 0}} ;
     while X <> 1 + n do
-                  {{ FILL_IN_HERE }} ->>
-                  {{ FILL_IN_HERE }}
+                  {{ Y = #fib (X-1) /\ Z = #fib X /\ X > 0 /\ X <> 1 + n }} ->>
+                  {{ Z = #fib X  /\ Z + Y = #fib (1+X) /\ 1+X > 0}}
       T := Z
-                  {{ FILL_IN_HERE }};
+                  {{ T = #fib X  /\ Z + Y = #fib (1+X) /\ 1+X > 0}};
       Z := Z + Y
-                  {{ FILL_IN_HERE }};
+                  {{ T = #fib X  /\ Z = #fib (1+X) /\ 1+X > 0}};
       Y := T
-                  {{ FILL_IN_HERE }};
+                  {{ Y = #fib X  /\ Z = #fib (1+X) /\ 1+X > 0 }};
       X := 1 + X
-                  {{ FILL_IN_HERE }}
+                  {{ Y = #fib (X-1) /\ Z = #fib X /\ X > 0 }}
     end
-    {{ FILL_IN_HERE }} ->>
+    {{ Y = #fib (X-1)  /\ Z = #fib X  /\ X > 0 /\ X = 1 + n }} ->>
     {{ Y = #fib n }}
    }>.
 
 Theorem dfib_correct : forall n,
   outer_triple_valid (dfib n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  verify. 
+  - destruct (st X).
+    + inversion H1.
+    + simpl. rewrite sub_0_r. reflexivity.
+  - rewrite sub_0_r. reflexivity.
+  - assert (sub_one: S n - 1 = n). {
+    simpl. rewrite sub_0_r. reflexivity.
+  }
+  rewrite sub_one. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 5 stars, advanced, optional (improve_dcom)
