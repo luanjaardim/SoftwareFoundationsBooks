@@ -203,7 +203,8 @@ Example test_step_2 :
           (C 2)
           (C 4)).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  Print step. apply ST_Plus2. apply ST_Plus2. apply ST_PlusConstConst.
+Qed.
 (** [] *)
 
 End SimpleArith1.
@@ -464,7 +465,28 @@ Inductive step : tm -> tm -> Prop :=
 Theorem step_deterministic :
   deterministic step.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold deterministic. intros.
+  generalize dependent y2.
+  induction H; intros.
+  - (* ST_PlusConstConst *) inversion H0; subst.
+    + (* ST_PlusConstConst *) reflexivity.
+    + (* ST_Plus1 *) inversion H3.
+    + (* ST_Plus2 *) inversion H4.
+  - (* ST_Plus1 *)  inversion H0; subst.
+    + (* ST_PlusConstConst *)
+      inversion H.
+    + (* ST_Plus1 *)
+      apply IHstep in H4. rewrite H4. reflexivity.
+    + (* ST_Plus2 *)
+      inversion H3. subst. inversion H.
+  - (* ST_Plus2 *) inversion H1; subst.
+    + (* ST_PlusConstConst *)
+      inversion H0.
+    + (* ST_Plus1 *) inversion H. subst. inversion H5.
+    + (* ST_Plus2 *)
+      apply IHstep in H6. rewrite H6. reflexivity.
+Qed.
+
 (** [] *)
 
 (* ================================================================= *)
@@ -617,8 +639,13 @@ Inductive step : tm -> tm -> Prop :=
 Lemma value_not_same_as_normal_form :
   exists v, value v /\ ~ normal_form step v.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists (P (C 1) (C 2)). split.
+  - apply v_funny.
+  - unfold normal_form. intro contra. apply contra. exists (C 3). apply ST_PlusConstConst.
+Qed.
+
 End Temp1.
+
 
 (** [] *)
 
@@ -652,7 +679,10 @@ Inductive step : tm -> tm -> Prop :=
 Lemma value_not_same_as_normal_form :
   exists v, value v /\ ~ normal_form step v.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eexists. split.
+  - apply v_const.
+  - unfold normal_form. intro contra. apply contra. exists (P (C 1) (C 0)). apply ST_Funny.
+Qed.
 
 End Temp2.
 (** [] *)
@@ -687,7 +717,11 @@ Inductive step : tm -> tm -> Prop :=
 Lemma value_not_same_as_normal_form :
   exists t, ~ value t /\ normal_form step t.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  exists (P (C 0) (P (C 1) (C 1))). split.
+  - intro contra. inversion contra.
+  - unfold normal_form. intro contra. destruct contra.
+    inversion H. subst. inversion H3.
+Qed.
 
 End Temp3.
 (** [] *)
