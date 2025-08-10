@@ -803,13 +803,21 @@ Definition manual_grade_for_smallstep_bools : option (nat*string) := None.
 Theorem strong_progress_bool : forall t,
   value t \/ (exists t', t --> t').
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intro t. induction t.
+  - left. apply v_tru.
+  - left. apply v_fls.
+  - destruct IHt1; inversion H.
+    + right. exists t2. constructor.
+    + right. exists t3. constructor.
+    + right. exists (test x t2 t3). constructor. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard, optional (step_deterministic) *)
 Theorem step_deterministic : deterministic step.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold deterministic. intros. Admitted.
+
 (** [] *)
 
 Module Temp5.
@@ -845,7 +853,8 @@ Inductive step : tm -> tm -> Prop :=
   | ST_If : forall t1 t1' t2 t3,
       t1 --> t1' ->
       test t1 t2 t3 --> test t1' t2 t3
-  (* FILL IN HERE *)
+  | ST_ShortCircuit : forall t1 t2,
+      test t1 t2 t2 --> t2
 
   where " t '-->' t' " := (step t t').
 
@@ -860,7 +869,9 @@ Definition bool_step_prop4 :=
 Example bool_step_prop4_holds :
   bool_step_prop4.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold bool_step_prop4. apply ST_ShortCircuit.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, standard, optional (properties_of_altered_step)
@@ -875,6 +886,10 @@ Proof.
       briefly (1 sentence) explain your answer.
 
       Optional: prove your answer correct in Coq. *)
+
+Theorem not_determ:  ~ (deterministic step).
+Proof.
+  unfold deterministic. intro contra. Admitted.
 
 (* FILL IN HERE
    - Does a strong progress theorem hold? Write yes or no and
@@ -1045,7 +1060,8 @@ Qed.
 Lemma test_multistep_2:
   C 3 -->* C 3.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply multi_refl.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, standard, optional (test_multistep_3) *)
@@ -1054,7 +1070,8 @@ Lemma test_multistep_3:
    -->*
       P (C 0) (C 3).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  apply multi_refl.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, standard (test_multistep_4) *)
@@ -1069,7 +1086,18 @@ Lemma test_multistep_4:
         (C 0)
         (C (2 + (0 + 3))).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  eapply multi_step.
+  - eapply ST_Plus2.
+    + constructor.
+    + eapply ST_Plus2.
+      * constructor.
+      *  eapply ST_PlusConstConst.
+  - eapply multi_step.
+    + eapply ST_Plus2.
+      * constructor.
+      * eapply ST_PlusConstConst.
+    + apply multi_refl.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
